@@ -9,10 +9,11 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.QueueOfferResult.Enqueued
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import akka.stream.{Materializer, OverflowStrategy}
-import com.typesafe.scalalogging.StrictLogging
 import info.mukel.telegrambot4s.api.{RequestHandler, TelegramApiException}
 import info.mukel.telegrambot4s.marshalling.AkkaHttpMarshalling
 import info.mukel.telegrambot4s.methods.{ApiRequest, ApiResponse}
+import io.circe.Decoder
+import slogging.StrictLogging
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success, Try}
@@ -42,7 +43,7 @@ class SourceQueueClient(token: String, telegramHost: String = "api.telegram.org"
     * @tparam R Request's expected result type
     * @return The request result wrapped in a Future (async)
     */
-  override def apply[R: Manifest](request: ApiRequest[R]): Future[R] = {
+  def apply[R : Decoder](request: ApiRequest[R]): Future[R] = {
     val promise = Promise[HttpResponse]
 
     val response = queue.synchronized {
@@ -65,7 +66,7 @@ class SourceQueueClient(token: String, telegramHost: String = "api.telegram.org"
       }
   }
 
-  private def toApiResponse[R: Manifest](httpResponse: HttpResponse): Future[ApiResponse[R]] = {
+  private def toApiResponse[R](httpResponse: HttpResponse)(implicit decR: Decoder[R]): Future[ApiResponse[R]] = {
     Unmarshal(httpResponse.entity).to[ApiResponse[R]]
   }
 }

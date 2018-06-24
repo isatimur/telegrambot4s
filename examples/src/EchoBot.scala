@@ -8,6 +8,8 @@ import info.mukel.telegrambot4s.models._
 class EchoBot(token: String) extends ExampleBot(token)
   with Polling {
 
+  import info.mukel.telegrambot4s.marshalling.CirceMarshaller._
+
   override def receiveMessage(msg: Message): Unit = {
     for (text <- msg.text)
       request(SendMessage(msg.source, text.reverse))

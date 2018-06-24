@@ -6,10 +6,11 @@ import akka.http.scaladsl.marshalling._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
-import com.typesafe.scalalogging.StrictLogging
-import info.mukel.telegrambot4s.api.{RequestHandler, TelegramApiException}
+import info.mukel.telegrambot4s.api.RequestHandler
 import info.mukel.telegrambot4s.marshalling.AkkaHttpMarshalling
 import info.mukel.telegrambot4s.methods.{ApiRequest, ApiResponse}
+import io.circe.Decoder
+import slogging.StrictLogging
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -26,7 +27,7 @@ class AkkaHttpClient(token: String, telegramHost: String = "api.telegram.org")(i
 
   private val http = Http()
 
-  private def toHttpRequest[R: Manifest](r: ApiRequest[R]): Future[HttpRequest] = {
+  private def toHttpRequest[R](r: ApiRequest[R]): Future[HttpRequest] = {
     Marshal(r).to[RequestEntity]
       .map {
         re =>
@@ -34,8 +35,9 @@ class AkkaHttpClient(token: String, telegramHost: String = "api.telegram.org")(i
       }
   }
 
-  private def toApiResponse[R: Manifest](httpResponse: HttpResponse): Future[ApiResponse[R]] = {
-    Unmarshal(httpResponse.entity).to[ApiResponse[R]]
+  private def toApiResponse[R : Decoder](httpResponse: HttpResponse): Future[ApiResponse[R]] = {
+    Unmarshal(httpResponse.entity)
+      .to[ApiResponse[R]]
   }
 
   /** Spawns a type-safe request.
@@ -44,7 +46,7 @@ class AkkaHttpClient(token: String, telegramHost: String = "api.telegram.org")(i
     * @tparam R Request's expected result type
     * @return The request result wrapped in a Future (async)
     */
-  override def apply[R: Manifest](request: ApiRequest[R]): Future[R] = {
+  def apply[R : Decoder](request: ApiRequest[R]): Future[R] = {
     toHttpRequest(request)
       .flatMap(http.singleRequest(_))
       .flatMap(toApiResponse[R])

@@ -8,6 +8,7 @@ import info.mukel.telegrambot4s.models.UpdateType.Filters._
 import info.mukel.telegrambot4s.models._
 
 import scala.concurrent.duration._
+import info.mukel.telegrambot4s.marshalling.CirceMarshaller._
 
 /**
   * Send self-destructing messages.

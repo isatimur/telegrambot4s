@@ -7,6 +7,8 @@ import scala.concurrent.Future
 
 class PokerBot(token: String) extends ExampleBot(token) with Polling with Commands with Callbacks {
 
+  import info.mukel.telegrambot4s.marshalling.CirceMarshaller._
+
   onCommand("/start") { implicit msg =>
     // Note that the button doesn't contain the game_short_name.
     val playNowBtn = InlineKeyboardButton.callbackGame("🎮 Play now!")

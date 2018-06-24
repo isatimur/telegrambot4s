@@ -6,6 +6,8 @@ import info.mukel.telegrambot4s.models.{Message, Update}
 
 trait PerChatRequests extends ActorBroker with AkkaDefaults {
 
+  import info.mukel.telegrambot4s.marshalling.CirceMarshaller._
+
   override val broker = Some(system.actorOf(Props(new Broker), "broker"))
 
   class Broker extends Actor {

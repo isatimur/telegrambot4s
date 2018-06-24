@@ -8,10 +8,11 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
-import com.typesafe.scalalogging.StrictLogging
-import info.mukel.telegrambot4s.api.{RequestHandler, TelegramApiException}
+import info.mukel.telegrambot4s.api.RequestHandler
 import info.mukel.telegrambot4s.marshalling.AkkaHttpMarshalling
 import info.mukel.telegrambot4s.methods.{ApiRequest, ApiResponse}
+import io.circe.Decoder
+import slogging.StrictLogging
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -29,7 +30,7 @@ class YetAnotherAkkaClient(token: String, telegramHost: String = "api.telegram.o
     * @tparam R Request's expected result type
     * @return The request result wrapped in a Future (async)
     */
-  override def apply[R: Manifest](request: ApiRequest[R]): Future[R] = {
+  def apply[R](request: ApiRequest[R])(implicit decR: Decoder[R]): Future[R] = {
     Source.fromFuture(toHttpRequest(request))
       .via(flow)
       .mapAsync(1)(toApiResponse[R])
@@ -47,7 +48,7 @@ class YetAnotherAkkaClient(token: String, telegramHost: String = "api.telegram.o
       }
   }
 
-  private def toApiResponse[R: Manifest](httpResponse: HttpResponse): Future[ApiResponse[R]] = {
+  private def toApiResponse[R](httpResponse: HttpResponse)(implicit decR: Decoder[R]): Future[ApiResponse[R]] = {
     Unmarshal(httpResponse.entity).to[ApiResponse[R]]
   }
 }
